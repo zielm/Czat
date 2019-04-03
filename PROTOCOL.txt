@@ -1,0 +1,74 @@
+Projekt programowanie współbieżne.
+
+
+Kolejki
+- Kolejka wiadomości (88888) – kolejka główna, przez tę kolejkę użytkownicy wysyłają do serwera zapytania i wiadomości do innych użytkowników oraz odbierają zwykłe wiadomości
+- Kolejka wiadomości priorytetowych (77777) – przez tę kolejkę użytkownicy odbierają wiadomości priorytetowe
+- Kolejka komunikatów z serwera (11111) – przez tę kolejkę serwer wysyła do użytkowników komunikaty, a użytkownicy je stąd odbierają
+
+
+Struktura wiadomości:
+long mType
+int typ
+int podtyp
+char odbiorca[16]
+char nadawca[16]
+char wiadomość[256]
+long mTypeNadawcy
+
+mType – do kogo wysyłana jest wiadomość 
+- PID do klienta
+- 1 do serwera
+typ – menu zarządzania
+- 0 - zarządzanie kontem
+- 1 – podgląd listy
+- 2 – wysyłanie wiadomości indywidualnej
+- 3 – wysyłanie wiadomości grupowej
+- 4 – odbieranie wiadomości
+- 5 – obsługa grupy
+- 9 – powodzenie / niepowodzenie
+podtyp –zarządzanie kontem
+- 0 – zaloguj
+- 1 - wyloguj
+podgląd listy – wyświetl listę użytkowników lub grup
+- 0 – zalogowani użytkownicy
+- 1 – dostępne grupy
+- 2 – użytkownicy danej grupy
+wysyłanie/odbieranie wiadomości – wyślij lub odbierz wiadomość
+- 0 – wiadomość priorytetowa
+- 1 – wiadomość zwykła
+obsługa grupy – zapisz lub wypisz się z grupy
+- 0 – zapisanie się do grupy
+- 1 – wypisanie się z grupy
+powodzenie – komunikat od serwera do klienta o powodzeniu lub niepowodzeniu wykonania polecenia od klienta
+- (-1) – nie udało się
+-1 – udało się
+char odbiorca[16] – odbiorca wiadomości / hasło / nazwa grupy
+char nadawca[16] – nadawca wiadomości / login
+char wiadomosc[256] – treść wiadomości
+
+
+Struktura klienta
+long id
+char login[16]
+char haslo[16]
+int aktywny
+
+id – pid klienta
+aktywny – status klienta
+-0 – niezalogowany
+-1 – zalogowany
+
+
+Struktura grupy
+char nazwa[16]
+klient *skladGrupy[64]
+int liczbaOsob
+
+
+Opis sposobu komunikacji
+Do komunikacji używamy trzech kolejek. Kolejka wiadomości jest kolejka główną, przez którą użytkownicy wysyłają wszystkie zapytania i wiadomości oraz odbierają zwykłe wiadomości. Serwer odbiera stamtąd wszystkie komunikaty od użytkowników i wysyła im komunikaty o powodzeniu lub niepowodzeniu akcji (dokładny opis tego jak przebiegło wykonywanie zadania w polu wiadomość) oraz rozsyła wiadomości do innych użytkowników na kolejkę wiadomości (zwykłe wiadomości) lub priorytetową (wiadomości priorytetowe).
+Odbiorca wiadomości jest rozpoznawany po wartości mType, która dla serwera jest równa 1, dla klientów – ich PID.
+Przy wysyłaniu wiadomości klient podaje swój login w polu nadawca i login odbiorcy (lub nazwę grupy) w polu odbiorca. Można wysłać wiadomość tylko do aktualnie zalogowanego użytkownika.
+Przy dołączaniu / opuszczaniu grupy, nazwa grupy jest zapisywana w polu odbiorca. Przy prośbie o przesłaniu listy, lista jest przesyłana w treści komunikatu. Po każdym wysłanym komunikacie, klient oczekuje na odpowiedź serwera. 
+Podczas logowania klient wysyła do serwera prośbę o zalogowanie, gdzie login jest zapisany w polu nadawca, a hasło w polu odbiorca.
